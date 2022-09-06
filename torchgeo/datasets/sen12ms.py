@@ -192,9 +192,7 @@ class SEN12MS(NonGeoDataset):
         assert split in ["train", "test"]
 
         self._validate_bands(bands)
-        self.band_indices = torch.tensor(
-            [self.band_names.index(b) for b in bands]
-        ).long()
+        self.band_indices = [int(self.band_names.index(b)) for b in bands]
         self.bands = bands
 
         self.root = root
@@ -227,10 +225,10 @@ class SEN12MS(NonGeoDataset):
         s1 = self._load_raster(filename, "s1")
         s2 = self._load_raster(filename, "s2")
 
-        image = torch.cat(tensors=[s1, s2], dim=0)
-        image = torch.index_select(image, dim=0, index=self.band_indices)
+        image = np.concatenate([s1, s2], axis=0)
+        image = image[self.band_indices,]
 
-        sample: Dict[str, Tensor] = {"image": image, "mask": lc}
+        sample: Dict[str, np.ndarray] = {"image": image, "mask": lc}
 
         if self.transforms is not None:
             sample = self.transforms(sample)
@@ -245,7 +243,7 @@ class SEN12MS(NonGeoDataset):
         """
         return len(self.ids)
 
-    def _load_raster(self, filename: str, source: str) -> Tensor:
+    def _load_raster(self, filename: str, source: str) -> np.ndarray:
         """Load a single raster image or target.
 
         Args:
@@ -269,8 +267,8 @@ class SEN12MS(NonGeoDataset):
             array = f.read()
             if array.dtype == np.uint16:
                 array = array.astype(np.int32)
-            tensor = torch.from_numpy(array)
-            return tensor
+            
+            return array
 
     def _validate_bands(self, bands: Sequence[str]) -> None:
         """Validate list of bands.

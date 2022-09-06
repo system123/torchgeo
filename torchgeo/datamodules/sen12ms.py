@@ -91,7 +91,7 @@ class SEN12MSDataModule(pl.LightningDataModule):
         Returns:
             preprocessed sample
         """
-        sample["image"] = sample["image"].float()
+        sample["image"] = torch.from_numpy(sample["image"]).float()
 
         if self.band_set == "all":
             sample["image"][:2] = sample["image"][:2].clamp(-25, 0) / -25
@@ -102,7 +102,7 @@ class SEN12MSDataModule(pl.LightningDataModule):
             sample["image"][:] = sample["image"][:].clamp(0, 10000) / 10000
 
         if "mask" in sample:
-            sample["mask"] = sample["mask"][0, :, :].long()
+            sample["mask"] = torch.from_numpy(sample["mask"][0, :, :]).long()
             sample["mask"] = torch.take(self.DFC2020_CLASS_MAPPING, sample["mask"])
 
         return sample
